@@ -66,43 +66,51 @@ public class CameraActivity extends ActionBarActivity {
     public void onResume() {
         super.onResume();
 
-        if(mCamera == null){
-            initializeCamera();
-        }
+        initializeCamera();
 
-        // Create our Preview view and set it as the content of our activity.
-        mPreview = new CameraPreview(this, mCamera);
-        FrameLayout preview = (FrameLayout) findViewById(R.id.camera_preview);
-
-        // Add a listener to the Capture button
-        Button captureButton = (Button) findViewById(R.id.button_capture);
-        captureButton.setOnClickListener(
-                new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        // get an image from the camera
-                        mCamera.takePicture(null, null, mPicture);
-                    }
-                }
-        );
-
-        preview.addView(mPreview);
+        initializeCameraView();
     }
 
     /** A safe way to get an instance of the Camera object. */
-    public static void initializeCamera(){
-        try {
-            mCamera = Camera.open(); // attempt to get a Camera instance
+    private static void initializeCamera(){
+        if (mCamera == null) {
+            try {
+                mCamera = Camera.open(); // attempt to get a Camera instance
+            } catch (Exception e) {
+                mCamera = null;
+                Log.d(TAG, "Camera is not available for use. Need more graceful way to handle this in production");
+                e.printStackTrace();
+            }
         }
-        catch (Exception e){
-            mCamera = null;
-            Log.d(TAG, "Camera is not available for use. Need more graceful way to handle this in production");
-            e.printStackTrace();
+    }
+
+    private void initializeCameraView() {
+        if (mPreview == null) {
+            mPreview = new CameraPreview(this, mCamera);
+            FrameLayout preview = (FrameLayout) findViewById(R.id.camera_preview);
+
+            // Add a listener to the Capture button
+            Button captureButton = (Button) findViewById(R.id.button_capture);
+            captureButton.setOnClickListener(
+                    new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            // get an image from the camera
+                            mCamera.takePicture(null, null, mPicture);
+                        }
+                    }
+            );
+
+            preview.addView(mPreview);
+        } else {
+            mPreview.setCamera(mCamera);
+            mPreview.getHolder().addCallback(mPreview);
         }
     }
 
     private void releaseCameraAndPreview() {
         if (mCamera != null) {
+            mPreview.setCamera(null);
             mPreview.getHolder().removeCallback(mPreview);
             mCamera.stopPreview();
             mCamera.release();
