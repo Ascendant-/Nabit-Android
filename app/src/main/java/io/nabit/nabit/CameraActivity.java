@@ -19,14 +19,6 @@ public class CameraActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
-
-        // Create an instance of Camera
-        initializeCamera();
-
-        // Create our Preview view and set it as the content of our activity.
-        mPreview = new CameraPreview(this, mCamera);
-        FrameLayout preview = (FrameLayout) findViewById(R.id.camera_preview);
-        preview.addView(mPreview);
     }
 
     @Override
@@ -56,8 +48,7 @@ public class CameraActivity extends ActionBarActivity {
         super.onPause();
 
         if (mCamera != null) {
-            mCamera.release();
-            mCamera = null;
+            releaseCameraAndPreview();
         }
     }
 
@@ -68,6 +59,11 @@ public class CameraActivity extends ActionBarActivity {
         if(mCamera == null){
             initializeCamera();
         }
+
+        // Create our Preview view and set it as the content of our activity.
+        mPreview = new CameraPreview(this, mCamera);
+        FrameLayout preview = (FrameLayout) findViewById(R.id.camera_preview);
+        preview.addView(mPreview);
     }
 
     /** A safe way to get an instance of the Camera object. */
@@ -78,6 +74,17 @@ public class CameraActivity extends ActionBarActivity {
         catch (Exception e){
             mCamera = null;
             Log.d(TAG, "Camera is not available for use. Need more graceful way to handle this in production");
+            e.printStackTrace();
         }
     }
+
+    private void releaseCameraAndPreview() {
+        if (mCamera != null) {
+            mPreview.getHolder().removeCallback(mPreview);
+            mCamera.stopPreview();
+            mCamera.release();
+            mCamera = null;
+        }
+    }
+
 }
