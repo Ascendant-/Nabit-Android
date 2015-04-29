@@ -1,6 +1,8 @@
 package io.nabit.nabit;
 
+import android.content.Intent;
 import android.hardware.Camera;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
@@ -73,21 +75,20 @@ public class CameraActivity extends ActionBarActivity {
 
     /** A safe way to get an instance of the Camera object. */
     private static void initializeCamera(){
-        if (mCamera == null) {
-            try {
-                mCamera = Camera.open(); // attempt to get a Camera instance
-            } catch (Exception e) {
-                mCamera = null;
-                Log.d(TAG, "Camera is not available for use. Need more graceful way to handle this in production");
-                e.printStackTrace();
-            }
+        try {
+            mCamera = Camera.open(); // attempt to get a Camera instance
+        } catch (Exception e) {
+            mCamera = null;
+            Log.d(TAG, "Camera is not available for use. Need more graceful way to handle this in production");
+            e.printStackTrace();
         }
     }
 
     private void initializeCameraView() {
+        FrameLayout preview = (FrameLayout) findViewById(R.id.camera_preview);
+
         if (mPreview == null) {
             mPreview = new CameraPreview(this, mCamera);
-            FrameLayout preview = (FrameLayout) findViewById(R.id.camera_preview);
 
             // Add a listener to the Capture button
             Button captureButton = (Button) findViewById(R.id.button_capture);
@@ -100,12 +101,14 @@ public class CameraActivity extends ActionBarActivity {
                         }
                     }
             );
-
-            preview.addView(mPreview);
         } else {
             mPreview.setCamera(mCamera);
             mPreview.getHolder().addCallback(mPreview);
+
+            preview.removeView(mPreview);
         }
+
+        preview.addView(mPreview);
     }
 
     private void releaseCameraAndPreview() {
@@ -133,6 +136,8 @@ public class CameraActivity extends ActionBarActivity {
                 FileOutputStream fos = new FileOutputStream(pictureFile);
                 fos.write(data);
                 fos.close();
+                
+                galleryAddPic("file:"+pictureFile.getAbsolutePath());
             } catch (FileNotFoundException e) {
                 Log.d(TAG, "File not found: " + e.getMessage());
             } catch (IOException e) {
@@ -140,5 +145,13 @@ public class CameraActivity extends ActionBarActivity {
             }
         }
     };
+
+    private void galleryAddPic(String currentPhotoPath) {
+        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+        File f = new File(currentPhotoPath);
+        Uri contentUri = Uri.fromFile(f);
+        mediaScanIntent.setData(contentUri);
+        this.sendBroadcast(mediaScanIntent);
+    }
 
 }
