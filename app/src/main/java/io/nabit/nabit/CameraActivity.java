@@ -23,6 +23,7 @@ public class CameraActivity extends ActionBarActivity {
 
     private static Camera mCamera;
     private static CameraPreview mPreview;
+    private static CameraHandlerThread mCameraHandlerThread;
 
     public static final int MEDIA_TYPE_IMAGE = 1;
     public static final int MEDIA_TYPE_VIDEO = 2;
@@ -31,6 +32,10 @@ public class CameraActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
+
+        Log.d("MainThread", Thread.currentThread().getName());//debugging
+
+        mCameraHandlerThread = CameraHandlerThread.getInstance();
     }
 
     @Override
